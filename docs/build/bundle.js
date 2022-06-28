@@ -1,5 +1,5 @@
 
-(function(l, r) { if (!l || l.getElementById('livereloadscript')) return; r = l.createElement('script'); r.async = 1; r.src = '//' + (self.location.host || 'localhost').split(':')[0] + ':35730/livereload.js?snipver=1'; r.id = 'livereloadscript'; l.getElementsByTagName('head')[0].appendChild(r) })(self.document);
+(function(l, r) { if (!l || l.getElementById('livereloadscript')) return; r = l.createElement('script'); r.async = 1; r.src = '//' + (self.location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1'; r.id = 'livereloadscript'; l.getElementsByTagName('head')[0].appendChild(r) })(self.document);
 var app = (function () {
     'use strict';
 
@@ -87837,17 +87837,31 @@ intervel_1 as (
         else payout_value
     end as payout
     from payout_raw_2
-),
-output as (
+), all_payouts as(
     select
-    a.year_ag as year_ag,
-    a.payout * 0.1 + b.payout * 0.5  as combined_payout,
-    a.payout as sum_early,
-    b.payout as sum_late,
-    c.payout as rolling_early
+    coalesce(a.year_ag, b.year_ag, c.year_ag) as year_ag,
+    coalesce(a.payout, 0) as sum_early,
+    coalesce(b.payout, 0) as sum_late,
+    coalesce(c.payout,0) as rolling_early
     from payout_sum_early a
-    join payout_sum_late b on a.year_ag = b.year_ag
-    join payout_rolling_early c on a.year_ag = c.year_ag
+    full outer join payout_sum_late b on a.year_ag = b.year_ag
+    full outer join payout_rolling_early c on a.year_ag = c.year_ag
+), combineRow as(
+    select
+    year_ag,
+    sum(sum_early) as sum_early,
+    sum(sum_late) as sum_late,
+    sum(rolling_early) as rolling_early
+    from all_payouts
+    group by year_ag
+), output as (
+    select
+    year_ag,
+    sum_early * 0.1 + sum_late * 0.5  as combined_payout,
+    sum_early,
+    sum_late,
+    rolling_early
+    from combineRow
 )
 select * from output
 `;
@@ -87984,17 +87998,31 @@ intervel_1 as (
         else payout_value
     end as payout
     from payout_raw_2
-),
-output as (
+), all_payouts as(
     select
-    a.year_ag as year_ag,
-    a.payout * 0.1 + b.payout * 0.5  as combined_payout,
-    a.payout as sum_early,
-    b.payout as sum_late,
-    c.payout as rolling_early
+    coalesce(a.year_ag, b.year_ag, c.year_ag) as year_ag,
+    coalesce(a.payout, 0) as sum_early,
+    coalesce(b.payout, 0) as sum_late,
+    coalesce(c.payout,0) as rolling_early
     from payout_sum_early a
-    join payout_sum_late b on a.year_ag = b.year_ag
-    join payout_rolling_early c on a.year_ag = c.year_ag
+    full outer join payout_sum_late b on a.year_ag = b.year_ag
+    full outer join payout_rolling_early c on a.year_ag = c.year_ag
+), combineRow as(
+    select
+    year_ag,
+    sum(sum_early) as sum_early,
+    sum(sum_late) as sum_late,
+    sum(rolling_early) as rolling_early
+    from all_payouts
+    group by year_ag
+), output as (
+    select
+    year_ag,
+    sum_early * 0.1 + sum_late * 0.5  as combined_payout,
+    sum_early,
+    sum_late,
+    rolling_early
+    from combineRow
 )
 select * from output
 `;
